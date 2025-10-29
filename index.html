@@ -170,13 +170,18 @@
     }
 
     .bg-option {
-      height: 100px;
+        min-height: 100px;
       border-radius: 12px;
-      background-size: cover;
+      background-size: contain;
       background-position: center;
+      background-repeat: no-repeat;
       cursor: pointer;
       border: 2px solid transparent;
       transition: border-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .bg-option:hover {
@@ -207,7 +212,7 @@
     <h1>Выбери фон</h1>
     <p>Твой дневник будет с этим фоном</p>
     <div class="bg-options">
-      <div class="bg-option" data-bg="tbilisi" style="background-image: url('tblisi.jpg')"></div>
+      <div class="bg-option" data-bg="tbilisi" style="background-image: url('tbilisi.jpg')"></div>
       <div class="bg-option" data-bg="kazbegi" style="background-image: url('kazbegi.png')"></div>
       <div class="bg-option" data-bg="mцхета" style="background-image: url('mcxeta.jpg')"></div>
     </div>
@@ -240,11 +245,11 @@
 
   <script>
     // === ЗАМЕНИ ЭТИ ССЫЛКИ НА СВОИ ===
-    const backgrounds = {
-      tbilisi: 'tblisi.jpg',
-      kazbegi: 'kazbegi.png',
-      'mцхета': 'mcxeta.jpg'
-    };
+const backgrounds = {
+  tbilisi: 'tbilisi.jpg',    // ← Исправлено: "tblisi" → "tbilisi"
+  kazbegi: 'kazbegi.png',
+  'mцхета': 'mcxeta.jpg'
+};
     // ===============================
 
     const body = document.body;
@@ -385,6 +390,7 @@
   </script>
 </body>
 </html>
+
 
 
 
