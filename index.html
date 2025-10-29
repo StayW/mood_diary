@@ -24,21 +24,22 @@
       background-position: center;
       background-repeat: no-repeat;
       min-height: 100vh;
+      transition: background 0.4s ease;
     }
 
     .container {
       max-width: 500px;
       margin: 0 auto;
       padding: 0 16px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      backdrop-filter: blur(6px);
     }
 
     h1 {
       text-align: center;
-      margin: 0 0 24px;
+      margin: 0 0 20px;
       font-size: 24px;
       font-weight: 700;
     }
@@ -56,7 +57,7 @@
       justify-content: center;
       gap: 16px;
       flex-wrap: wrap;
-      margin: 24px 0;
+      margin: 20px 0;
     }
 
     .mood-btn {
@@ -208,9 +209,10 @@
     <h1>Выбери фон</h1>
     <p>Твой дневник будет с этим фоном</p>
     <div class="bg-options">
-      <div class="bg-option" data-bg="tbilisi" style="background-image: url('https://images.unsplash.com/photo-1593692900234-7367e9a5e5f3?auto=format&fit=crop&w=600&q=80')"></div>
-      <div class="bg-option" data-bg="svaneti" style="background-image: url('https://images.unsplash.com/photo-1605100804763-247f67b360a2?auto=format&fit=crop&w=600&q=80')"></div>
-      <div class="bg-option" data-bg="kazbegi" style="background-image: url('https://images.unsplash.com/photo-1589970103808-7b4c1b0b0e5d?auto=format&fit=crop&w=600&q=80')"></div>
+      <!-- Превью с base64 (маленькие, но работают всегда) -->
+      <div class="bg-option" data-bg="tbilisi" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23e0c9a6%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22%235a4a3a%22>Tbilisi</text></svg>')"></div>
+      <div class="bg-option" data-bg="svaneti" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%238ab37d%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22white%22>Svaneti</text></svg>')"></div>
+      <div class="bg-option" data-bg="kazbegi" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%236b8ca4%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22white%22>Kazbegi</text></svg>')"></div>
     </div>
     <button id="use-bg-btn" style="display:none;">Применить фон</button>
   </div>
@@ -241,6 +243,7 @@
   </div>
 
   <script>
+    // Фоны — внешние, но с fallback
     const backgrounds = {
       tbilisi: 'https://images.unsplash.com/photo-1593692900234-7367e9a5e5f3?auto=format&fit=crop&w=1920&q=80',
       svaneti: 'https://images.unsplash.com/photo-1605100804763-247f67b360a2?auto=format&fit=crop&w=1920&q=80',
@@ -256,9 +259,25 @@
 
     let selectedBg = localStorage.getItem('moodDiaryBg') || null;
 
-    // Применить сохранённый фон или показать выбор
-    if (selectedBg && backgrounds[selectedBg]) {
-      body.style.backgroundImage = `url('${backgrounds[selectedBg]}')`;
+    // Применить фон или показать выбор
+    function applyBackground(bgName) {
+      if (bgName && backgrounds[bgName]) {
+        const img = new Image();
+        img.onload = () => {
+          body.style.backgroundImage = `url('${backgrounds[bgName]}')`;
+        };
+        img.onerror = () => {
+          // Если не загрузилось — нейтральный фон
+          body.style.background = '#f0f4f8';
+        };
+        img.src = backgrounds[bgName];
+      } else {
+        body.style.background = '#f0f4f8';
+      }
+    }
+
+    if (selectedBg) {
+      applyBackground(selectedBg);
       mainApp.style.display = 'block';
     } else {
       bgScreen.style.display = 'block';
@@ -279,7 +298,7 @@
     useBgBtn.addEventListener('click', () => {
       if (!currentSelection) return;
       localStorage.setItem('moodDiaryBg', currentSelection);
-      body.style.backgroundImage = `url('${backgrounds[currentSelection]}')`;
+      applyBackground(currentSelection);
       bgScreen.style.display = 'none';
       mainApp.style.display = 'block';
     });
@@ -288,9 +307,9 @@
     changeBgBtn.addEventListener('click', () => {
       mainApp.style.display = 'none';
       bgScreen.style.display = 'block';
-      // Подсветить текущий
+      bgOptions.forEach(o => o.classList.remove('selected'));
       if (selectedBg) {
-        document.querySelector(`.bg-option[data-bg="${selectedBg}"]`).classList.add('selected');
+        document.querySelector(`.bg-option[data-bg="${selectedBg}"]`)?.classList.add('selected');
       }
     });
 
