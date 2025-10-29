@@ -10,9 +10,9 @@
       --safe-area-inset-top: env(safe-area-inset-top, 0px);
       --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: #f9f9fb;
       color: #1d1f22;
       margin: 0;
       padding: 0;
@@ -20,18 +20,29 @@
       line-height: 1.5;
       padding-top: max(20px, var(--safe-area-inset-top));
       padding-bottom: max(20px, var(--safe-area-inset-bottom));
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
     }
+
     .container {
       max-width: 500px;
       margin: 0 auto;
       padding: 0 16px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      backdrop-filter: blur(4px);
     }
+
     h1 {
       text-align: center;
       margin: 0 0 24px;
       font-size: 24px;
       font-weight: 700;
     }
+
     .today-shown {
       text-align: center;
       font-size: 18px;
@@ -39,6 +50,7 @@
       color: #006699;
       font-weight: 600;
     }
+
     .mood-buttons {
       display: flex;
       justify-content: center;
@@ -46,6 +58,7 @@
       flex-wrap: wrap;
       margin: 24px 0;
     }
+
     .mood-btn {
       width: 64px;
       height: 64px;
@@ -60,15 +73,18 @@
       align-items: center;
       justify-content: center;
     }
+
     .mood-btn:hover, .mood-btn:focus {
       transform: scale(1.12);
       box-shadow: 0 4px 12px rgba(0,0,0,0.18);
       outline: none;
     }
+
     .mood-btn.selected {
       outline: 3px solid #0088cc;
       outline-offset: 4px;
     }
+
     textarea {
       width: 100%;
       min-height: 90px;
@@ -82,10 +98,12 @@
       background: white;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
+
     textarea:focus {
       border-color: #0088cc;
       outline: none;
     }
+
     button {
       display: block;
       width: 100%;
@@ -99,25 +117,32 @@
       margin: 12px 0;
       transition: background 0.2s;
     }
+
     #save-btn {
       background: #0088cc;
     }
+
     #save-btn:hover, #save-btn:focus {
       background: #006699;
     }
+
     .back-btn {
       background: #6c757d;
     }
+
     .back-btn:hover, .back-btn:focus {
       background: #5a6268;
     }
+
     .history {
       margin-top: 24px;
     }
+
     .history h2 {
       font-size: 20px;
       margin: 0 0 16px;
     }
+
     .history-item {
       display: flex;
       justify-content: space-between;
@@ -125,10 +150,47 @@
       font-size: 17px;
       border-bottom: 1px solid #eee;
     }
+
     .history-item:last-child {
       border-bottom: none;
     }
+
+    /* Экран выбора фона */
+    #background-screen {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .bg-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .bg-option {
+      height: 100px;
+      border-radius: 12px;
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .bg-option:hover {
+      border-color: #0088cc;
+    }
+
+    .bg-option.selected {
+      border-color: #0088cc;
+    }
+
     @media (max-width: 360px) {
+      .bg-options {
+        grid-template-columns: 1fr;
+      }
       .mood-btn {
         width: 56px;
         height: 56px;
@@ -141,7 +203,20 @@
   </style>
 </head>
 <body>
-  <div class="container" id="app">
+  <!-- Экран выбора фона -->
+  <div id="background-screen" class="container">
+    <h1>Выбери фон</h1>
+    <p>Твой дневник будет с этим фоном</p>
+    <div class="bg-options">
+      <div class="bg-option" data-bg="tbilisi" style="background-image: url('https://images.unsplash.com/photo-1593692900234-7367e9a5e5f3?auto=format&fit=crop&w=600&q=80')"></div>
+      <div class="bg-option" data-bg="svaneti" style="background-image: url('https://images.unsplash.com/photo-1605100804763-247f67b360a2?auto=format&fit=crop&w=600&q=80')"></div>
+      <div class="bg-option" data-bg="kazbegi" style="background-image: url('https://images.unsplash.com/photo-1589970103808-7b4c1b0b0e5d?auto=format&fit=crop&w=600&q=80')"></div>
+    </div>
+    <button id="use-bg-btn" style="display:none;">Применить фон</button>
+  </div>
+
+  <!-- Основной дневник -->
+  <div id="main-app" class="container" style="display:none;">
     <h1>Дневник настроения</h1>
     <div id="today-form">
       <p style="text-align:center; margin:0 0 16px; color:#666;">Как ты себя чувствуешь сегодня?</p>
@@ -155,14 +230,71 @@
       <textarea id="note-input" placeholder="Хочешь добавить заметку? (необязательно)"></textarea>
       <button id="save-btn">Сохранить настроение</button>
       <button class="back-btn" id="show-history-btn">Моя история</button>
+      <button class="back-btn" id="change-bg-btn">Сменить фон</button>
     </div>
+
     <div id="history-view" style="display:none;">
       <h2>Моя история (последние 7 дней)</h2>
       <div id="history-list"></div>
       <button class="back-btn" id="back-to-form">← Назад</button>
     </div>
   </div>
+
   <script>
+    const backgrounds = {
+      tbilisi: 'https://images.unsplash.com/photo-1593692900234-7367e9a5e5f3?auto=format&fit=crop&w=1920&q=80',
+      svaneti: 'https://images.unsplash.com/photo-1605100804763-247f67b360a2?auto=format&fit=crop&w=1920&q=80',
+      kazbegi: 'https://images.unsplash.com/photo-1589970103808-7b4c1b0b0e5d?auto=format&fit=crop&w=1920&q=80'
+    };
+
+    const body = document.body;
+    const bgScreen = document.getElementById('background-screen');
+    const mainApp = document.getElementById('main-app');
+    const bgOptions = document.querySelectorAll('.bg-option');
+    const useBgBtn = document.getElementById('use-bg-btn');
+    const changeBgBtn = document.getElementById('change-bg-btn');
+
+    let selectedBg = localStorage.getItem('moodDiaryBg') || null;
+
+    // Применить сохранённый фон или показать выбор
+    if (selectedBg && backgrounds[selectedBg]) {
+      body.style.backgroundImage = `url('${backgrounds[selectedBg]}')`;
+      mainApp.style.display = 'block';
+    } else {
+      bgScreen.style.display = 'block';
+    }
+
+    // Выбор фона
+    let currentSelection = null;
+    bgOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        bgOptions.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        currentSelection = opt.dataset.bg;
+        useBgBtn.style.display = 'block';
+      });
+    });
+
+    // Применить фон
+    useBgBtn.addEventListener('click', () => {
+      if (!currentSelection) return;
+      localStorage.setItem('moodDiaryBg', currentSelection);
+      body.style.backgroundImage = `url('${backgrounds[currentSelection]}')`;
+      bgScreen.style.display = 'none';
+      mainApp.style.display = 'block';
+    });
+
+    // Сменить фон
+    changeBgBtn.addEventListener('click', () => {
+      mainApp.style.display = 'none';
+      bgScreen.style.display = 'block';
+      // Подсветить текущий
+      if (selectedBg) {
+        document.querySelector(`.bg-option[data-bg="${selectedBg}"]`).classList.add('selected');
+      }
+    });
+
+    // ========== ОСНОВНАЯ ЛОГИКА ДНЕВНИКА ==========
     const moodEmoji = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
     const moodButtons = document.querySelectorAll('.mood-btn');
     const noteInput = document.getElementById('note-input');
@@ -172,6 +304,7 @@
     const todayForm = document.getElementById('today-form');
     const historyView = document.getElementById('history-view');
     const historyList = document.getElementById('history-list');
+
     let selectedMood = null;
     const today = new Date().toISOString().split('T')[0];
     const data = JSON.parse(localStorage.getItem('moodDiary') || '{}');
@@ -232,6 +365,7 @@
       todayForm.style.display = 'block';
     });
 
+    // Telegram WebApp
     if (window.Telegram?.WebApp) {
       const tg = Telegram.WebApp;
       tg.ready();
