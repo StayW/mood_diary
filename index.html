@@ -170,7 +170,7 @@
     }
 
     .bg-option {
-        min-height: 100px;
+      min-height: 100px;
       border-radius: 12px;
       background-size: contain;
       background-position: center;
@@ -212,9 +212,9 @@
     <h1>Выбери фон</h1>
     <p>Твой дневник будет с этим фоном</p>
     <div class="bg-options">
-      <div class="bg-option" data-bg="tbilisi" style="background-image: url('tbilisi.jpg')"></div>
+      <div class="bg-option" data-bg="tbilisi" style="background-image: url('tblisi.jpg')"></div>
       <div class="bg-option" data-bg="kazbegi" style="background-image: url('kazbegi.png')"></div>
-      <div class="bg-option" data-bg="mцхета" style="background-image: url('mcxeta.jpg')"></div>
+      <div class="bg-option" data-bg="mtskheta" style="background-image: url('mcxeta.jpg')"></div>
     </div>
     <button id="use-bg-btn" style="display:none;">Применить фон</button>
   </div>
@@ -244,13 +244,11 @@
   </div>
 
   <script>
-    // === ЗАМЕНИ ЭТИ ССЫЛКИ НА СВОИ ===
-const backgrounds = {
-  tbilisi: 'tbilisi.jpg',    // ← Исправлено: "tblisi" → "tbilisi"
-  kazbegi: 'kazbegi.png',
-  'mцхета': 'mcxeta.jpg'
-};
-    // ===============================
+    const backgrounds = {
+      tbilisi: 'tblisi.jpg',
+      kazbegi: 'kazbegi.png',
+      mtskheta: 'mcxeta.jpg'
+    };
 
     const body = document.body;
     const bgScreen = document.getElementById('background-screen');
@@ -390,7 +388,3 @@ const backgrounds = {
   </script>
 </body>
 </html>
-
-
-
-
