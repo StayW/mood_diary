@@ -156,7 +156,6 @@
       border-bottom: none;
     }
 
-    /* Экран выбора фона */
     #background-screen {
       display: none;
       text-align: center;
@@ -204,20 +203,17 @@
   </style>
 </head>
 <body>
-  <!-- Экран выбора фона -->
   <div id="background-screen" class="container">
     <h1>Выбери фон</h1>
     <p>Твой дневник будет с этим фоном</p>
     <div class="bg-options">
-      <!-- Превью с base64 (маленькие, но работают всегда) -->
-      <div class="bg-option" data-bg="tbilisi" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23e0c9a6%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22%235a4a3a%22>Tbilisi</text></svg>')"></div>
-      <div class="bg-option" data-bg="svaneti" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%238ab37d%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22white%22>Svaneti</text></svg>')"></div>
-      <div class="bg-option" data-bg="kazbegi" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%236b8ca4%22/><text x=%2250%22 y=%2255%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22white%22>Kazbegi</text></svg>')"></div>
+      <div class="bg-option" data-bg="tbilisi" style="background-image: url('1a')"></div>
+      <div class="bg-option" data-bg="kazbegi" style="background-image: url('2b')"></div>
+      <div class="bg-option" data-bg="mцхета" style="background-image: url('3d')"></div>
     </div>
     <button id="use-bg-btn" style="display:none;">Применить фон</button>
   </div>
 
-  <!-- Основной дневник -->
   <div id="main-app" class="container" style="display:none;">
     <h1>Дневник настроения</h1>
     <div id="today-form">
@@ -243,12 +239,13 @@
   </div>
 
   <script>
-    // Фоны — внешние, но с fallback
+    // === ЗАМЕНИ ЭТИ ССЫЛКИ НА СВОИ ===
     const backgrounds = {
-      tbilisi: 'https://images.unsplash.com/photo-1593692900234-7367e9a5e5f3?auto=format&fit=crop&w=1920&q=80',
-      svaneti: 'https://images.unsplash.com/photo-1605100804763-247f67b360a2?auto=format&fit=crop&w=1920&q=80',
-      kazbegi: 'https://images.unsplash.com/photo-1589970103808-7b4c1b0b0e5d?auto=format&fit=crop&w=1920&q=80'
+      tbilisi: '1a',
+      kazbegi: '2b',
+      'mцхета': '3d'
     };
+    // ===============================
 
     const body = document.body;
     const bgScreen = document.getElementById('background-screen');
@@ -259,31 +256,21 @@
 
     let selectedBg = localStorage.getItem('moodDiaryBg') || null;
 
-    // Применить фон или показать выбор
     function applyBackground(bgName) {
       if (bgName && backgrounds[bgName]) {
-        const img = new Image();
-        img.onload = () => {
-          body.style.backgroundImage = `url('${backgrounds[bgName]}')`;
-        };
-        img.onerror = () => {
-          // Если не загрузилось — нейтральный фон
-          body.style.background = '#f0f4f8';
-        };
-        img.src = backgrounds[bgName];
+        body.style.backgroundImage = `url('${backgrounds[bgName]}')`;
       } else {
         body.style.background = '#f0f4f8';
       }
     }
 
-    if (selectedBg) {
+    if (selectedBg && backgrounds[selectedBg]) {
       applyBackground(selectedBg);
       mainApp.style.display = 'block';
     } else {
       bgScreen.style.display = 'block';
     }
 
-    // Выбор фона
     let currentSelection = null;
     bgOptions.forEach(opt => {
       opt.addEventListener('click', () => {
@@ -294,7 +281,6 @@
       });
     });
 
-    // Применить фон
     useBgBtn.addEventListener('click', () => {
       if (!currentSelection) return;
       localStorage.setItem('moodDiaryBg', currentSelection);
@@ -303,7 +289,6 @@
       mainApp.style.display = 'block';
     });
 
-    // Сменить фон
     changeBgBtn.addEventListener('click', () => {
       mainApp.style.display = 'none';
       bgScreen.style.display = 'block';
@@ -313,7 +298,7 @@
       }
     });
 
-    // ========== ОСНОВНАЯ ЛОГИКА ДНЕВНИКА ==========
+    // ========== ДНЕВНИК ==========
     const moodEmoji = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
     const moodButtons = document.querySelectorAll('.mood-btn');
     const noteInput = document.getElementById('note-input');
@@ -384,7 +369,6 @@
       todayForm.style.display = 'block';
     });
 
-    // Telegram WebApp
     if (window.Telegram?.WebApp) {
       const tg = Telegram.WebApp;
       tg.ready();
