@@ -6,12 +6,10 @@
   <title>Дневник настроения</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Поддержка безопасных зон (для iPhone с чёлкой и Android с навигацией) */
     :root {
       --safe-area-inset-top: env(safe-area-inset-top, 0px);
       --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: #f9f9fb;
@@ -20,24 +18,20 @@
       padding: 0;
       font-size: 17px;
       line-height: 1.5;
-      /* Учитываем верхнюю безопасную зону */
       padding-top: max(20px, var(--safe-area-inset-top));
       padding-bottom: max(20px, var(--safe-area-inset-bottom));
     }
-
     .container {
       max-width: 500px;
       margin: 0 auto;
       padding: 0 16px;
     }
-
     h1 {
       text-align: center;
       margin: 0 0 24px;
       font-size: 24px;
       font-weight: 700;
     }
-
     .today-shown {
       text-align: center;
       font-size: 18px;
@@ -45,7 +39,6 @@
       color: #006699;
       font-weight: 600;
     }
-
     .mood-buttons {
       display: flex;
       justify-content: center;
@@ -53,7 +46,6 @@
       flex-wrap: wrap;
       margin: 24px 0;
     }
-
     .mood-btn {
       width: 64px;
       height: 64px;
@@ -68,18 +60,15 @@
       align-items: center;
       justify-content: center;
     }
-
     .mood-btn:hover, .mood-btn:focus {
       transform: scale(1.12);
       box-shadow: 0 4px 12px rgba(0,0,0,0.18);
       outline: none;
     }
-
     .mood-btn.selected {
       outline: 3px solid #0088cc;
       outline-offset: 4px;
     }
-
     textarea {
       width: 100%;
       min-height: 90px;
@@ -93,12 +82,10 @@
       background: white;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-
     textarea:focus {
       border-color: #0088cc;
       outline: none;
     }
-
     button {
       display: block;
       width: 100%;
@@ -112,32 +99,25 @@
       margin: 12px 0;
       transition: background 0.2s;
     }
-
     #save-btn {
       background: #0088cc;
     }
-
     #save-btn:hover, #save-btn:focus {
       background: #006699;
     }
-
     .back-btn {
       background: #6c757d;
     }
-
     .back-btn:hover, .back-btn:focus {
       background: #5a6268;
     }
-
     .history {
       margin-top: 24px;
     }
-
     .history h2 {
       font-size: 20px;
       margin: 0 0 16px;
     }
-
     .history-item {
       display: flex;
       justify-content: space-between;
@@ -145,17 +125,9 @@
       font-size: 17px;
       border-bottom: 1px solid #eee;
     }
-
     .history-item:last-child {
       border-bottom: none;
     }
-
-    /* Скрытие стандартных элементов при запуске в Telegram */
-    .webview-only {
-      display: none;
-    }
-
-    /* Адаптация под маленькие экраны */
     @media (max-width: 360px) {
       .mood-btn {
         width: 56px;
@@ -171,11 +143,8 @@
 <body>
   <div class="container" id="app">
     <h1>Дневник настроения</h1>
-
-    <!-- Форма сегодняшнего дня -->
     <div id="today-form">
       <p style="text-align:center; margin:0 0 16px; color:#666;">Как ты себя чувствуешь сегодня?</p>
-
       <div class="mood-buttons" id="mood-buttons">
         <button class="mood-btn" data-value="1" aria-label="Очень плохо">😞</button>
         <button class="mood-btn" data-value="2" aria-label="Плохо">😕</button>
@@ -183,24 +152,18 @@
         <button class="mood-btn" data-value="4" aria-label="Хорошо">🙂</button>
         <button class="mood-btn" data-value="5" aria-label="Отлично">😊</button>
       </div>
-
       <textarea id="note-input" placeholder="Хочешь добавить заметку? (необязательно)"></textarea>
-
       <button id="save-btn">Сохранить настроение</button>
       <button class="back-btn" id="show-history-btn">Моя история</button>
     </div>
-
-    <!-- История -->
     <div id="history-view" style="display:none;">
       <h2>Моя история (последние 7 дней)</h2>
       <div id="history-list"></div>
       <button class="back-btn" id="back-to-form">← Назад</button>
     </div>
   </div>
-
   <script>
     const moodEmoji = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
-
     const moodButtons = document.querySelectorAll('.mood-btn');
     const noteInput = document.getElementById('note-input');
     const saveBtn = document.getElementById('save-btn');
@@ -209,12 +172,10 @@
     const todayForm = document.getElementById('today-form');
     const historyView = document.getElementById('history-view');
     const historyList = document.getElementById('history-list');
-
     let selectedMood = null;
     const today = new Date().toISOString().split('T')[0];
     const data = JSON.parse(localStorage.getItem('moodDiary') || '{}');
 
-    // Показ текущего настроения, если уже сохранено
     if (data[today]) {
       const todayDiv = document.createElement('div');
       todayDiv.className = 'today-shown';
@@ -225,7 +186,6 @@
       document.querySelector(`.mood-btn[data-value="${selectedMood}"]`).classList.add('selected');
     }
 
-    // Выбор настроения
     moodButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         moodButtons.forEach(b => b.classList.remove('selected'));
@@ -234,13 +194,11 @@
       });
     });
 
-    // Сохранение
     saveBtn.addEventListener('click', () => {
       if (selectedMood === null) {
         alert('Пожалуйста, выбери настроение.');
         return;
       }
-
       data[today] = {
         mood: selectedMood,
         note: noteInput.value.trim()
@@ -249,11 +207,9 @@
       alert('Сохранено! 😊');
     });
 
-    // Показ истории за 7 дней
     function showHistory() {
       const now = new Date();
       const items = [];
-
       for (let i = 0; i < 7; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
@@ -263,30 +219,24 @@
         const emoji = record ? moodEmoji[record.mood] : '—';
         items.push({ dayName, emoji });
       }
-
       historyList.innerHTML = items.map(item =>
         `<div class="history-item"><span>${item.dayName}</span><span>${item.emoji}</span></div>`
       ).join('');
-
       todayForm.style.display = 'none';
       historyView.style.display = 'block';
     }
 
-    // Переключение экранов
     showHistoryBtn.addEventListener('click', showHistory);
     backToFormBtn.addEventListener('click', () => {
       historyView.style.display = 'none';
       todayForm.style.display = 'block';
     });
 
-    // Telegram WebApp: улучшенная интеграция
     if (window.Telegram?.WebApp) {
       const tg = Telegram.WebApp;
       tg.ready();
       tg.expand();
-      tg.disableVerticalSwipes(); // чтобы не закрывалось свайпом случайно
-
-      // Кнопка "Закрыть" внизу (если поддерживается)
+      tg.disableVerticalSwipes();
       if (tg.MainButton) {
         tg.MainButton.text = 'Закрыть';
         tg.MainButton.color = '#6c757d';
