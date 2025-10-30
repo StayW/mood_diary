@@ -243,12 +243,16 @@
       max-width: 280px;
       padding: 14px;
       font-size: 16px;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: not-allowed;
     }
 
     #use-bg-btn.active {
       opacity: 1;
       pointer-events: auto;
-      background: #0088cc;
+      cursor: pointer;
     }
 
     @media (max-width: 360px) {
@@ -350,6 +354,7 @@
       }
     }
 
+    // Показ основного экрана или выбора фона
     if (selectedBg && backgrounds[selectedBg]) {
       applyBackground(selectedBg);
       mainApp.style.display = 'block';
@@ -357,13 +362,24 @@
       bgScreen.style.display = 'flex';
     }
 
-    let currentSelection = null;
+    // Функция активации кнопки
+    function activateUseButton() {
+      useBgBtn.classList.add('active');
+    }
+
+    // Обработчики выбора фона
+    let currentSelection = selectedBg; // ← Учитываем уже сохранённый фон
     bgOptions.forEach(opt => {
+      if (opt.dataset.bg === selectedBg) {
+        opt.classList.add('selected');
+        activateUseButton(); // ← Активируем кнопку при старте, если фон уже есть
+      }
+
       opt.addEventListener('click', () => {
         bgOptions.forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
         currentSelection = opt.dataset.bg;
-        useBgBtn.classList.add('active'); // ← Активируем кнопку
+        activateUseButton();
       });
     });
 
@@ -378,12 +394,18 @@
     changeBgBtn.addEventListener('click', () => {
       mainApp.style.display = 'none';
       bgScreen.style.display = 'flex';
+      // Сброс выбора — но если был сохранён фон, выделяем его
       bgOptions.forEach(o => o.classList.remove('selected'));
       if (selectedBg) {
-        document.querySelector(`.bg-option[data-bg="${selectedBg}"]`)?.classList.add('selected');
-        useBgBtn.classList.add('active'); // ← Если уже выбран — активируем кнопку
+        const savedOption = document.querySelector(`.bg-option[data-bg="${selectedBg}"]`);
+        if (savedOption) {
+          savedOption.classList.add('selected');
+          activateUseButton();
+        } else {
+          useBgBtn.classList.remove('active');
+        }
       } else {
-        useBgBtn.classList.remove('active'); // ← Если нет — деактивируем
+        useBgBtn.classList.remove('active');
       }
     });
 
