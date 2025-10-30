@@ -27,7 +27,7 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      background-attachment: fixed; /* ← Фон не скроллится */
+      background-attachment: fixed;
       min-height: 100vh;
       transition: background 0.4s ease;
       -webkit-overflow-scrolling: touch;
@@ -167,30 +167,40 @@
       display: none;
       text-align: center;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 1000;
     }
 
     .bg-options {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr); /* ← Только 2 колонки */
-      gap: 12px;
-      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 20px 0;
     }
 
     .bg-option {
-      min-height: 100px;
+      width: 120px;
+      height: 120px;
       border-radius: 12px;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
       cursor: pointer;
       border: 2px solid transparent;
-      transition: border-color 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
       position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .bg-option::before {
@@ -216,27 +226,47 @@
     }
 
     .bg-option:hover {
-      border-color: #0088cc;
+      transform: scale(1.05);
     }
 
     .bg-option.selected {
       border-color: #0088cc;
+      transform: scale(1.05);
+    }
+
+    #use-bg-btn {
+      background: #0088cc;
+      opacity: 0.5;
+      pointer-events: none;
+      margin-top: 20px;
+      width: 80%;
+      max-width: 280px;
+      padding: 14px;
+      font-size: 16px;
+    }
+
+    #use-bg-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+      background: #0088cc;
     }
 
     @media (max-width: 360px) {
       .bg-options {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 12px;
       }
-      .mood-btn {
-        width: 56px;
-        height: 56px;
-        font-size: 28px;
-      }
-      h1 {
-        font-size: 22px;
+      .bg-option {
+        width: 100px;
+        height: 100px;
       }
       .container {
         padding: 0 12px;
+      }
+      #use-bg-btn {
+        width: 90%;
+        padding: 12px;
+        font-size: 15px;
       }
     }
 
@@ -258,7 +288,7 @@
 <body>
   <div id="background-screen" class="container">
     <h1>Выбери фон</h1>
-    <p>Твой дневник будет с этим фоном</p>
+    <p style="margin: 8px 0 20px; color: #666;">Твой дневник будет с этим фоном</p>
     <div class="bg-options">
       <div class="bg-option" data-bg="tbilisi">
         <img src="tab.jpg" alt="Тбилиси" />
@@ -267,7 +297,7 @@
         <img src="mcxeta.jpg" alt="Мцхета" />
       </div>
     </div>
-    <button id="use-bg-btn" style="display:none;">Применить фон</button>
+    <button id="use-bg-btn">Применить фон</button>
   </div>
 
   <div id="main-app" class="container" style="display:none;">
@@ -314,7 +344,7 @@
         body.style.backgroundImage = `url('${backgrounds[bgName]}')`;
         body.style.backgroundSize = 'cover';
         body.style.backgroundPosition = 'center';
-        body.style.backgroundAttachment = 'fixed'; // ← Не скроллится
+        body.style.backgroundAttachment = 'fixed';
       } else {
         body.style.background = '#f0f4f8';
       }
@@ -324,7 +354,7 @@
       applyBackground(selectedBg);
       mainApp.style.display = 'block';
     } else {
-      bgScreen.style.display = 'block';
+      bgScreen.style.display = 'flex';
     }
 
     let currentSelection = null;
@@ -333,7 +363,7 @@
         bgOptions.forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
         currentSelection = opt.dataset.bg;
-        useBgBtn.style.display = 'block';
+        useBgBtn.classList.add('active'); // ← Активируем кнопку
       });
     });
 
@@ -347,10 +377,13 @@
 
     changeBgBtn.addEventListener('click', () => {
       mainApp.style.display = 'none';
-      bgScreen.style.display = 'block';
+      bgScreen.style.display = 'flex';
       bgOptions.forEach(o => o.classList.remove('selected'));
       if (selectedBg) {
         document.querySelector(`.bg-option[data-bg="${selectedBg}"]`)?.classList.add('selected');
+        useBgBtn.classList.add('active'); // ← Если уже выбран — активируем кнопку
+      } else {
+        useBgBtn.classList.remove('active'); // ← Если нет — деактивируем
       }
     });
 
