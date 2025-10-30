@@ -201,6 +201,7 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      touch-action: manipulation; /* ← Для быстрого отклика на касания */
     }
 
     .bg-option::before {
@@ -237,7 +238,6 @@
     #use-bg-btn {
       background: #0088cc;
       opacity: 0.5;
-      pointer-events: none;
       margin-top: 20px;
       width: 80%;
       max-width: 280px;
@@ -247,6 +247,7 @@
       border: none;
       border-radius: 12px;
       cursor: not-allowed;
+      pointer-events: none; /* ← Отключаем клик, пока не активировано */
     }
 
     #use-bg-btn.active {
@@ -365,6 +366,9 @@
     // Функция активации кнопки
     function activateUseButton() {
       useBgBtn.classList.add('active');
+      useBgBtn.disabled = false; // ← Важно: убираем disabled
+      useBgBtn.style.cursor = 'pointer';
+      useBgBtn.style.opacity = '1';
     }
 
     // Обработчики выбора фона
@@ -403,9 +407,15 @@
           activateUseButton();
         } else {
           useBgBtn.classList.remove('active');
+          useBgBtn.disabled = true;
+          useBgBtn.style.cursor = 'not-allowed';
+          useBgBtn.style.opacity = '0.5';
         }
       } else {
         useBgBtn.classList.remove('active');
+        useBgBtn.disabled = true;
+        useBgBtn.style.cursor = 'not-allowed';
+        useBgBtn.style.opacity = '0.5';
       }
     });
 
