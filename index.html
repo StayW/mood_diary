@@ -27,6 +27,7 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
+      background-attachment: fixed; /* ← Фон не скроллится */
       min-height: 100vh;
       transition: background 0.4s ease;
       -webkit-overflow-scrolling: touch;
@@ -170,7 +171,7 @@
 
     .bg-options {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr); /* ← Только 2 колонки */
       gap: 12px;
       margin-top: 20px;
     }
@@ -189,6 +190,29 @@
       justify-content: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       overflow: hidden;
+      position: relative;
+    }
+
+    .bg-option::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.1);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .bg-option img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 12px;
+      z-index: 2;
+      position: relative;
     }
 
     .bg-option:hover {
@@ -236,8 +260,12 @@
     <h1>Выбери фон</h1>
     <p>Твой дневник будет с этим фоном</p>
     <div class="bg-options">
-      <div class="bg-option" data-bg="tbilisi" style="background-image: url('tab.jpg')"></div>
-      <div class="bg-option" data-bg="mtskheta" style="background-image: url('mcxeta.jpg')"></div>
+      <div class="bg-option" data-bg="tbilisi">
+        <img src="tab.jpg" alt="Тбилиси" />
+      </div>
+      <div class="bg-option" data-bg="mtskheta">
+        <img src="mcxeta.jpg" alt="Мцхета" />
+      </div>
     </div>
     <button id="use-bg-btn" style="display:none;">Применить фон</button>
   </div>
@@ -286,6 +314,7 @@
         body.style.backgroundImage = `url('${backgrounds[bgName]}')`;
         body.style.backgroundSize = 'cover';
         body.style.backgroundPosition = 'center';
+        body.style.backgroundAttachment = 'fixed'; // ← Не скроллится
       } else {
         body.style.background = '#f0f4f8';
       }
@@ -423,4 +452,3 @@
   </script>
 </body>
 </html>
-
