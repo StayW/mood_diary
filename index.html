@@ -27,7 +27,6 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      /* Убираем fixed на мобильных, чтобы не мешал скроллу */
       background-attachment: fixed;
       min-height: 100vh;
       transition: background 0.4s ease;
@@ -45,11 +44,20 @@
       overflow: hidden;
     }
 
-    h1 {
+    h1, h2, h3 {
       text-align: center;
       margin: 0 0 20px;
       font-size: 24px;
       font-weight: 700;
+    }
+
+    h2 {
+      font-size: 22px;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin: 20px 0 16px;
     }
 
     .today-shown {
@@ -135,11 +143,11 @@
       background: #006699;
     }
 
-    .back-btn {
+    .back-btn, .notes-btn {
       background: #6c757d;
     }
 
-    .back-btn:hover, .back-btn:focus {
+    .back-btn:hover, .notes-btn:hover {
       background: #5a6268;
     }
 
@@ -147,12 +155,7 @@
       margin-top: 24px;
     }
 
-    .history h2 {
-      font-size: 20px;
-      margin: 0 0 16px;
-    }
-
-    #history-view {
+    #history-view, #notes-view {
       display: none;
     }
 
@@ -171,7 +174,6 @@
       color: #006699;
     }
 
-    /* === АДАПТИВНЫЙ СКРОЛЛИРУЕМЫЙ ГРАФИК === */
     .graph-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -179,7 +181,7 @@
       scrollbar-width: thin;
       margin: 20px 0;
       padding-bottom: 10px;
-      touch-action: pan-x; /* для плавного свайпа */
+      touch-action: pan-x;
     }
 
     .graph-container {
@@ -189,21 +191,36 @@
       min-width: 100%;
     }
 
-    .month-history {
+    .month-history, .notes-list {
       margin-top: 20px;
       font-size: 16px;
     }
 
-    .month-row {
+    .month-row, .note-item {
       display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 0;
       border-bottom: 1px solid #f0f0f5;
-      font-weight: 500;
     }
 
-    .month-row:last-child {
+    .note-item:last-child {
       border-bottom: none;
+    }
+
+    .note-date {
+      font-weight: 600;
+      color: #006699;
+    }
+
+    .note-mood {
+      font-size: 18px;
+      margin: 4px 0;
+    }
+
+    .note-text {
+      white-space: pre-wrap;
+      line-height: 1.5;
     }
 
     #background-screen {
@@ -299,12 +316,15 @@
       cursor: pointer;
     }
 
-    /* Адаптация для маленьких экранов */
     @media (max-width: 420px) {
       .graph-container {
         height: 280px;
       }
       body {
+        font-size: 16px;
+      }
+      button {
+        padding: 14px;
         font-size: 16px;
       }
     }
@@ -342,6 +362,7 @@
       <button class="back-btn" id="change-bg-btn">Сменить фон</button>
     </div>
 
+    <!-- История: график + месяцы -->
     <div id="history-view" class="container">
       <h2>Моя история</h2>
       <div class="stats" id="stats"></div>
@@ -351,7 +372,15 @@
         </div>
       </div>
       <div class="month-history" id="month-history"></div>
+      <button class="notes-btn" id="show-notes-btn">Смотреть историю заметок</button>
       <button class="back-btn" id="back-to-form">← Назад</button>
+    </div>
+
+    <!-- История заметок -->
+    <div id="notes-view" class="container">
+      <h2>Мои заметки</h2>
+      <div class="notes-list" id="notes-list"></div>
+      <button class="back-btn" id="back-to-history">← Назад к графику</button>
     </div>
   </div>
 
@@ -446,13 +475,17 @@
     const noteInput = document.getElementById('note-input');
     const saveBtn = document.getElementById('save-btn');
     const showHistoryBtn = document.getElementById('show-history-btn');
+    const showNotesBtn = document.getElementById('show-notes-btn');
     const backToFormBtn = document.getElementById('back-to-form');
+    const backToHistoryBtn = document.getElementById('back-to-history');
     const todayForm = document.getElementById('today-form');
     const historyView = document.getElementById('history-view');
+    const notesView = document.getElementById('notes-view');
     const statsEl = document.getElementById('stats');
     const graphEl = document.getElementById('mood-graph');
     const graphWrapper = document.getElementById('graph-wrapper');
     const monthHistoryEl = document.getElementById('month-history');
+    const notesListEl = document.getElementById('notes-list');
 
     let selectedMood = null;
     const today = new Date().toISOString().split('T')[0];
@@ -506,7 +539,7 @@
       });
     });
 
-    // ========== АДАПТИВНЫЙ ГРАФИК ==========
+    // ========== ГРАФИК ==========
     function showHistory() {
       const allDates = Object.keys(data).sort();
       if (allDates.length === 0) {
@@ -551,7 +584,7 @@
       drawGraph(fullData);
 
       const sortedMonths = Object.keys(monthlyAverages).sort().reverse();
-      monthHistoryEl.innerHTML = '<h3 style="margin:20px 0 12px; font-size:18px;">История по месяцам</h3>';
+      monthHistoryEl.innerHTML = '<h3>История по месяцам</h3>';
       if (sortedMonths.length === 0) {
         monthHistoryEl.innerHTML += '<p>Пока нет данных</p>';
       } else {
@@ -573,19 +606,18 @@
     }
 
     function drawGraph(data) {
-      const padding = { top: 25, right: 25, bottom: 50, left: 45 }; // чуть больше отступов
+      const padding = { top: 25, right: 25, bottom: 50, left: 45 };
       const height = 260;
-      const pointSpacing = window.innerWidth < 480 ? 80 : 70; // больше на телефоне
+      const pointSpacing = window.innerWidth < 480 ? 80 : 70;
       const totalWidth = data.length * pointSpacing + padding.left + padding.right;
 
       graphEl.setAttribute('width', totalWidth);
       graphEl.setAttribute('height', height);
-      graphWrapper.scrollLeft = totalWidth; // прокрутка к концу
+      graphWrapper.scrollLeft = totalWidth;
 
       graphEl.innerHTML = '';
       const svgNS = 'http://www.w3.org/2000/svg';
 
-      // Горизонтальные линии и подписи оси Y
       for (let level = 1; level <= 5; level++) {
         const y = padding.top + (5 - level) * ((height - padding.top - padding.bottom) / 4);
         const line = document.createElementNS(svgNS, 'line');
@@ -607,7 +639,6 @@
         graphEl.appendChild(text);
       }
 
-      // Собираем точки и подписи дат
       const points = [];
       data.forEach((item, i) => {
         const x = padding.left + i * pointSpacing;
@@ -626,7 +657,6 @@
         graphEl.appendChild(text);
       });
 
-      // Оси
       const axisX = document.createElementNS(svgNS, 'line');
       axisX.setAttribute('x1', padding.left);
       axisX.setAttribute('y1', height - padding.bottom);
@@ -645,7 +675,6 @@
       axisY.setAttribute('stroke-width', '1.5');
       graphEl.appendChild(axisY);
 
-      // Линия графика
       let pathD = '';
       let started = false;
       points.forEach(p => {
@@ -668,7 +697,6 @@
         line.setAttribute('stroke-linecap', 'round');
         graphEl.appendChild(line);
 
-        // Точки (без эмодзи)
         points.forEach(p => {
           if (p.value !== null) {
             const circle = document.createElementNS(svgNS, 'circle');
@@ -682,14 +710,53 @@
       }
     }
 
+    // ========== ИСТОРИЯ ЗАМЕТОК ==========
+    function showNotesHistory() {
+      const notes = [];
+      for (const date in data) {
+        const entry = data[date];
+        if (entry.note && entry.note.trim()) {
+          const d = new Date(date);
+          const dayMonth = d.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' });
+          notes.push({ date, dayMonth, mood: entry.mood, note: entry.note });
+        }
+      }
+
+      // Сортируем от новых к старым
+      notes.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (notes.length === 0) {
+        notesListEl.innerHTML = '<p>У вас пока нет заметок.</p>';
+      } else {
+        notesListEl.innerHTML = notes.map(item => `
+          <div class="note-item">
+            <div class="note-date">${item.dayMonth}</div>
+            <div class="note-mood">${moodEmoji[item.mood]}</div>
+            <div class="note-text">${item.note}</div>
+          </div>
+        `).join('');
+      }
+
+      historyView.style.display = 'none';
+      notesView.style.display = 'block';
+    }
+
+    // ========== СОБЫТИЯ ==========
     showHistoryBtn.addEventListener('click', () => {
       updateMonthlyAverages();
       showHistory();
     });
 
+    showNotesBtn.addEventListener('click', showNotesHistory);
+
     backToFormBtn.addEventListener('click', () => {
       historyView.style.display = 'none';
       todayForm.style.display = 'block';
+    });
+
+    backToHistoryBtn.addEventListener('click', () => {
+      notesView.style.display = 'none';
+      historyView.style.display = 'block';
     });
 
     // ==== TELEGRAM MINI APP ====
@@ -701,7 +768,9 @@
 
       tg.BackButton.show();
       tg.onEvent('backButtonClicked', () => {
-        if (historyView.style.display === 'block') {
+        if (notesView.style.display === 'block') {
+          backToHistoryBtn.click();
+        } else if (historyView.style.display === 'block') {
           backToFormBtn.click();
         } else {
           tg.close();
