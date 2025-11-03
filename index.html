@@ -181,10 +181,10 @@
     }
 
     .graph-container {
-      min-width: 500px; /* минимум */
       height: 240px;
       position: relative;
       display: block;
+      min-width: 100%;
     }
 
     .month-history {
@@ -333,7 +333,7 @@
     <div id="history-view" class="container">
       <h2>Моя история</h2>
       <div class="stats" id="stats"></div>
-      <div class="graph-wrapper">
+      <div class="graph-wrapper" id="graph-wrapper">
         <div class="graph-container">
           <svg id="mood-graph" width="100%" height="100%"></svg>
         </div>
@@ -439,7 +439,7 @@
     const historyView = document.getElementById('history-view');
     const statsEl = document.getElementById('stats');
     const graphEl = document.getElementById('mood-graph');
-    const graphContainer = document.querySelector('.graph-container');
+    const graphWrapper = document.getElementById('graph-wrapper');
     const monthHistoryEl = document.getElementById('month-history');
 
     let selectedMood = null;
@@ -494,24 +494,32 @@
       });
     });
 
-    // ========== СКРОЛЛИРУЕМЫЙ ГРАФИК ==========
+    // ========== ГРАФИК ==========
     function showHistory() {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
-      const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-
-      // Возьмём все дни (например, последние 90 дней)
       const allDates = Object.keys(data).sort();
       if (allDates.length === 0) {
-        graphEl.innerHTML = '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#999" font-size="16">Нет данных</text>';
         statsEl.innerHTML = '<p>Нет записей</p>';
         monthHistoryEl.innerHTML = '<p>Нет истории</p>';
+        graphEl.innerHTML = '<text x="50%" y="50%" text-anchor="middle" font-size="16" fill="#999">Нет данных</text>';
         todayForm.style.display = 'none';
         historyView.style.display = 'block';
         return;
       }
 
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+      const thisMonthAvg = monthlyAverages[monthKey] || '—';
+      const yearData = Object.keys(data).filter(d => d.startsWith(String(currentYear))).map(d => data[d].mood);
+      const yearAvg = yearData.length > 0 ? (yearData.reduce((a, b) => a + b, 0) / yearData.length).toFixed(1) : '—';
+
+      statsEl.innerHTML = `
+        <div class="stat-line">Этот месяц: <strong>${thisMonthAvg}</strong> / 5</div>
+        <div class="stat-line">Этот год: <strong>${yearAvg}</strong> / 5</div>
+      `;
+
+      // Генерируем полные дни
       const startDate = new Date(allDates[0]);
       const endDate = new Date(allDates[allDates.length - 1]);
       const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -529,17 +537,7 @@
         });
       }
 
-      // Среднее за месяц и год
-      const thisMonthAvg = monthlyAverages[monthKey] || '—';
-      const yearData = Object.keys(data).filter(d => d.startsWith(String(currentYear))).map(d => data[d].mood);
-      const yearAvg = yearData.length > 0 ? (yearData.reduce((a, b) => a + b, 0) / yearData.length).toFixed(1) : '—';
-
-      statsEl.innerHTML = `
-        <div class="stat-line">Этот месяц: <strong>${thisMonthAvg}</strong> / 5</div>
-        <div class="stat-line">Этот год: <strong>${yearAvg}</strong> / 5</div>
-      `;
-
-      drawScrollableGraph(fullData);
+      drawGraph(fullData);
 
       // Месячная история
       const sortedMonths = Object.keys(monthlyAverages).sort().reverse();
@@ -564,23 +562,24 @@
       historyView.style.display = 'block';
     }
 
-    function drawScrollableGraph(data) {
+    function drawGraph(data) {
       const padding = { top: 20, right: 20, bottom: 40, left: 40 };
       const height = 240;
-      const pointSpacing = 60; // расстояние между днями
+      const pointSpacing = 70; // px между днями
       const totalWidth = data.length * pointSpacing + padding.left + padding.right;
 
-      // Устанавливаем ширину контейнера, чтобы можно было скроллить
-      graphContainer.style.width = totalWidth + 'px';
+      // Устанавливаем ширину SVG
       graphEl.setAttribute('width', totalWidth);
       graphEl.setAttribute('height', height);
+      graphWrapper.scrollLeft = totalWidth; // прокручиваем к последнему дню
 
       graphEl.innerHTML = '';
       const svgNS = 'http://www.w3.org/2000/svg';
 
-      // Вертикальная ось (1-5)
+      // Вертикальная ось (1–5)
       for (let level = 1; level <= 5; level++) {
         const y = padding.top + (5 - level) * ((height - padding.top - padding.bottom) / 4);
+        // Горизонтальная линия сетки
         const line = document.createElementNS(svgNS, 'line');
         line.setAttribute('x1', padding.left);
         line.setAttribute('y1', y);
@@ -590,6 +589,7 @@
         line.setAttribute('stroke-width', '1');
         graphEl.appendChild(line);
 
+        // Подпись слева
         const text = document.createElementNS(svgNS, 'text');
         text.setAttribute('x', padding.left - 10);
         text.setAttribute('y', y + 4);
@@ -600,14 +600,16 @@
         graphEl.appendChild(text);
       }
 
-      // Горизонтальная ось и точки
+      // Собираем точки
       const points = [];
       data.forEach((item, i) => {
         const x = padding.left + i * pointSpacing;
-        const y = padding.top + (5 - (item.value || 1)) * ((height - padding.top - padding.bottom) / 4);
+        const y = item.value !== null
+          ? padding.top + (5 - item.value) * ((height - padding.top - padding.bottom) / 4)
+          : null;
         points.push({ x, y, value: item.value, label: item.dayMonth });
 
-        // Подпись даты
+        // Подпись даты под осью
         const text = document.createElementNS(svgNS, 'text');
         text.setAttribute('x', x);
         text.setAttribute('y', height - 10);
@@ -616,33 +618,39 @@
         text.setAttribute('fill', '#666');
         text.textContent = item.label;
         graphEl.appendChild(text);
-
-        // Вертикальная линия (необязательно)
-        // const vLine = document.createElementNS(svgNS, 'line');
-        // vLine.setAttribute('x1', x);
-        // vLine.setAttribute('y1', padding.top);
-        // vLine.setAttribute('x2', x);
-        // vLine.setAttribute('y2', height - padding.bottom);
-        // vLine.setAttribute('stroke', '#f0f0f0');
-        // vLine.setAttribute('stroke-width', '1');
-        // graphEl.appendChild(vLine);
       });
 
-      // Линия данных
-      let pathD = '';
-      let hasPrev = false;
-      let prevPoint = null;
+      // Ось X (нижняя линия)
+      const axisX = document.createElementNS(svgNS, 'line');
+      axisX.setAttribute('x1', padding.left);
+      axisX.setAttribute('y1', height - padding.bottom);
+      axisX.setAttribute('x2', totalWidth - padding.right);
+      axisX.setAttribute('y2', height - padding.bottom);
+      axisX.setAttribute('stroke', '#000');
+      axisX.setAttribute('stroke-width', '1.5');
+      graphEl.appendChild(axisX);
 
-      points.forEach((p, i) => {
+      // Ось Y (левая линия)
+      const axisY = document.createElementNS(svgNS, 'line');
+      axisY.setAttribute('x1', padding.left);
+      axisY.setAttribute('y1', padding.top);
+      axisY.setAttribute('x2', padding.left);
+      axisY.setAttribute('y2', height - padding.bottom);
+      axisY.setAttribute('stroke', '#000');
+      axisY.setAttribute('stroke-width', '1.5');
+      graphEl.appendChild(axisY);
+
+      // Линия графика
+      let pathD = '';
+      let started = false;
+      points.forEach(p => {
         if (p.value !== null) {
-          if (!hasPrev) {
+          if (!started) {
             pathD = `M ${p.x} ${p.y}`;
-            hasPrev = true;
+            started = true;
           } else {
-            // Прямая линия (можно заменить на кривую, если нужно)
             pathD += ` L ${p.x} ${p.y}`;
           }
-          prevPoint = p;
         }
       });
 
@@ -650,31 +658,21 @@
         const line = document.createElementNS(svgNS, 'path');
         line.setAttribute('d', pathD);
         line.setAttribute('fill', 'none');
-        line.setAttribute('stroke', '#ff7b54');
+        line.setAttribute('stroke', '#0088cc');
         line.setAttribute('stroke-width', '2.5');
         line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('stroke-linejoin', 'round');
         graphEl.appendChild(line);
 
-        // Точки
-        points.forEach((p, i) => {
+        // Круги на точках (без эмодзи!)
+        points.forEach(p => {
           if (p.value !== null) {
             const circle = document.createElementNS(svgNS, 'circle');
             circle.setAttribute('cx', p.x);
             circle.setAttribute('cy', p.y);
             circle.setAttribute('r', '5');
-            circle.setAttribute('fill', '#ffffff');
-            circle.setAttribute('stroke', '#ff7b54');
-            circle.setAttribute('stroke-width', '2');
+            circle.setAttribute('fill', '#0088cc');
             graphEl.appendChild(circle);
-
-            const emoji = document.createElementNS(svgNS, 'text');
-            emoji.setAttribute('x', p.x);
-            emoji.setAttribute('y', p.y + 3);
-            emoji.setAttribute('text-anchor', 'middle');
-            emoji.setAttribute('dominant-baseline', 'middle');
-            emoji.setAttribute('font-size', '12');
-            emoji.textContent = moodEmoji[p.value];
-            graphEl.appendChild(emoji);
           }
         });
       }
