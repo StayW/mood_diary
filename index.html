@@ -172,7 +172,7 @@
 
     .graph-container {
       width: 100%;
-      height: 180px;
+      height: 220px;
       margin: 20px 0;
       position: relative;
     }
@@ -515,7 +515,7 @@
       });
     });
 
-    // ========== КРАСИВАЯ ГРАФИКА ==========
+    // ========== ДВА ГРАФИКА ==========
     function showHistory() {
       const now = new Date();
       const currentYear = now.getFullYear();
@@ -543,7 +543,7 @@
         <div class="stat-line">Этот год: <strong>${yearAvg}</strong> / 5</div>
       `;
 
-      drawPrettyGraph(last14Days);
+      drawDualGraph(last14Days);
 
       // Месячная история
       const sortedMonths = Object.keys(monthlyAverages).sort().reverse();
@@ -568,14 +568,14 @@
       historyView.style.display = 'block';
     }
 
-    function drawPrettyGraph(data) {
+    function drawDualGraph(data) {
       const width = graphEl.clientWidth;
       const height = graphEl.clientHeight;
       const padding = { top: 20, right: 10, bottom: 30, left: 10 };
       const usableWidth = width - padding.left - padding.right;
       const usableHeight = height - padding.top - padding.bottom;
 
-      // Убираем пустые точки в начале (для красоты)
+      // Убираем пустые точки в начале
       let startIndex = 0;
       while (startIndex < data.length && data[startIndex].value === null) startIndex++;
       if (startIndex === data.length) {
@@ -583,8 +583,8 @@
         return;
       }
 
-      // Подготавливаем точки
-      const points = data.map((item, i) => {
+      // Подготавливаем точки для ежедневных данных
+      const dailyPoints = data.map((item, i) => {
         const x = padding.left + (i / (data.length - 1)) * usableWidth;
         const y = padding.top + usableHeight - (item.value ? ((item.value - 1) / 4) * usableHeight : usableHeight);
         return { x, y, value: item.value, day: item.day };
@@ -594,79 +594,74 @@
       graphEl.innerHTML = '';
       const svgNS = 'http://www.w3.org/2000/svg';
 
-      // Градиент
-      const defs = document.createElementNS(svgNS, 'defs');
-      const gradient = document.createElementNS(svgNS, 'linearGradient');
-      gradient.setAttribute('id', 'moodGradient');
-      gradient.setAttribute('x1', '0%');
-      gradient.setAttribute('y1', '0%');
-      gradient.setAttribute('x2', '0%');
-      gradient.setAttribute('y2', '100%');
-      const stop1 = document.createElementNS(svgNS, 'stop');
-      stop1.setAttribute('offset', '0%');
-      stop1.setAttribute('stop-color', '#4fc3f7');
-      stop1.setAttribute('stop-opacity', '0.6');
-      const stop2 = document.createElementNS(svgNS, 'stop');
-      stop2.setAttribute('offset', '100%');
-      stop2.setAttribute('stop-color', '#0088cc');
-      stop2.setAttribute('stop-opacity', '0.3');
-      gradient.appendChild(stop1);
-      gradient.appendChild(stop2);
-      defs.appendChild(gradient);
-      graphEl.appendChild(defs);
+      // Сетка (как на изображении)
+      const grid = document.createElementNS(svgNS, 'g');
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (i / 4) * usableHeight;
+        const line = document.createElementNS(svgNS, 'line');
+        line.setAttribute('x1', padding.left);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', width - padding.right);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#e0e0e0');
+        line.setAttribute('stroke-width', '1');
+        grid.appendChild(line);
+      }
+      for (let i = 0; i <= data.length - 1; i++) {
+        const x = padding.left + (i / (data.length - 1)) * usableWidth;
+        const line = document.createElementNS(svgNS, 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', padding.top);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', height - padding.bottom);
+        line.setAttribute('stroke', '#e0e0e0');
+        line.setAttribute('stroke-width', '1');
+        grid.appendChild(line);
+      }
+      graphEl.appendChild(grid);
 
-      // Плавная кривая (через Catmull-Rom → аппроксимация через кубические кривые)
-      let pathD = '';
-      if (points.length > 1) {
+      // Линия 1: Ежедневные оценки (оранжевая)
+      let pathD1 = '';
+      if (dailyPoints.length > 1) {
         const tension = 0.3;
-        const first = points[0];
-        pathD = `M ${first.x} ${first.y}`;
-        for (let i = 1; i < points.length - 1; i++) {
-          const p0 = points[i - 1];
-          const p1 = points[i];
-          const p2 = points[i + 1];
+        const first = dailyPoints[0];
+        pathD1 = `M ${first.x} ${first.y}`;
+        for (let i = 1; i < dailyPoints.length - 1; i++) {
+          const p0 = dailyPoints[i - 1];
+          const p1 = dailyPoints[i];
+          const p2 = dailyPoints[i + 1];
           const dx = (p2.x - p0.x) * tension;
           const dy = (p2.y - p0.y) * tension;
-          pathD += ` C ${p1.x - dx} ${p1.y - dy}, ${p1.x + dx} ${p1.y + dy}, ${p2.x} ${p2.y}`;
+          pathD1 += ` C ${p1.x - dx} ${p1.y - dy}, ${p1.x + dx} ${p1.y + dy}, ${p2.x} ${p2.y}`;
         }
-        if (points.length === 2) {
-          pathD += ` L ${points[1].x} ${points[1].y}`;
+        if (dailyPoints.length === 2) {
+          pathD1 += ` L ${dailyPoints[1].x} ${dailyPoints[1].y}`;
         }
       } else {
-        pathD = `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
+        pathD1 = `M ${dailyPoints[0].x} ${dailyPoints[0].y} L ${dailyPoints[0].x} ${dailyPoints[0].y}`;
       }
 
-      // Заливка под графиком
-      const areaPath = pathD + ` L ${points[points.length - 1].x} ${height - padding.bottom} L ${points[0].x} ${height - padding.bottom} Z`;
-      const area = document.createElementNS(svgNS, 'path');
-      area.setAttribute('d', areaPath);
-      area.setAttribute('fill', 'url(#moodGradient)');
-      graphEl.appendChild(area);
+      const line1 = document.createElementNS(svgNS, 'path');
+      line1.setAttribute('d', pathD1);
+      line1.setAttribute('fill', 'none');
+      line1.setAttribute('stroke', '#ff7b54'); // Оранжевый
+      line1.setAttribute('stroke-width', '2.5');
+      line1.setAttribute('stroke-linecap', 'round');
+      line1.setAttribute('stroke-linejoin', 'round');
+      graphEl.appendChild(line1);
 
-      // Линия графика
-      const line = document.createElementNS(svgNS, 'path');
-      line.setAttribute('d', pathD);
-      line.setAttribute('fill', 'none');
-      line.setAttribute('stroke', '#0088cc');
-      line.setAttribute('stroke-width', '2.5');
-      line.setAttribute('stroke-linecap', 'round');
-      line.setAttribute('stroke-linejoin', 'round');
-      graphEl.appendChild(line);
-
-      // Точки и эмодзи
-      points.forEach((p, i) => {
+      // Точки ежедневных оценок
+      dailyPoints.forEach((p, i) => {
         if (p.value !== null) {
-          // Круг под эмодзи
           const circle = document.createElementNS(svgNS, 'circle');
           circle.setAttribute('cx', p.x);
           circle.setAttribute('cy', p.y);
-          circle.setAttribute('r', '8');
+          circle.setAttribute('r', '6');
           circle.setAttribute('fill', '#ffffff');
-          circle.setAttribute('stroke', '#0088cc');
+          circle.setAttribute('stroke', '#ff7b54');
           circle.setAttribute('stroke-width', '2');
           graphEl.appendChild(circle);
 
-          // Эмодзи
           const emoji = document.createElementNS(svgNS, 'text');
           emoji.setAttribute('x', p.x);
           emoji.setAttribute('y', p.y + 4);
@@ -678,10 +673,94 @@
         }
       });
 
+      // Линия 2: Сглаженная средняя по месяцам (синяя)
+      // Берём последние 6 месяцев и интерполируем их по дням
+      const months = Object.keys(monthlyAverages).sort().reverse().slice(0, 6);
+      if (months.length < 2) {
+        // Если меньше 2 месяцев — не рисуем вторую линию
+        return;
+      }
+
+      // Создаём точки для второй линии (по месяцам)
+      const monthlyPoints = months.map((key, idx) => {
+        const [y, m] = key.split('-');
+        const monthDate = new Date(y, m - 1, 15); // середина месяца
+        const monthDay = monthDate.getDate();
+        const monthValue = monthlyAverages[key];
+
+        // Находим индекс дня в массиве data (ближайший к середине месяца)
+        const targetDate = monthDate.toISOString().split('T')[0];
+        let closestIndex = 0;
+        let minDiff = Infinity;
+        for (let i = 0; i < data.length; i++) {
+          const diff = Math.abs(new Date(data[i].date) - monthDate);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = i;
+          }
+        }
+
+        const x = padding.left + (closestIndex / (data.length - 1)) * usableWidth;
+        const y = padding.top + usableHeight - ((monthValue - 1) / 4) * usableHeight;
+
+        return { x, y, value: monthValue, label: `${m}/${y}` };
+      });
+
+      // Плавная линия для месячных средних
+      let pathD2 = '';
+      if (monthlyPoints.length > 1) {
+        const tension = 0.3;
+        const first = monthlyPoints[0];
+        pathD2 = `M ${first.x} ${first.y}`;
+        for (let i = 1; i < monthlyPoints.length - 1; i++) {
+          const p0 = monthlyPoints[i - 1];
+          const p1 = monthlyPoints[i];
+          const p2 = monthlyPoints[i + 1];
+          const dx = (p2.x - p0.x) * tension;
+          const dy = (p2.y - p0.y) * tension;
+          pathD2 += ` C ${p1.x - dx} ${p1.y - dy}, ${p1.x + dx} ${p1.y + dy}, ${p2.x} ${p2.y}`;
+        }
+        if (monthlyPoints.length === 2) {
+          pathD2 += ` L ${monthlyPoints[1].x} ${monthlyPoints[1].y}`;
+        }
+      } else {
+        pathD2 = `M ${monthlyPoints[0].x} ${monthlyPoints[0].y} L ${monthlyPoints[0].x} ${monthlyPoints[0].y}`;
+      }
+
+      const line2 = document.createElementNS(svgNS, 'path');
+      line2.setAttribute('d', pathD2);
+      line2.setAttribute('fill', 'none');
+      line2.setAttribute('stroke', '#0088cc'); // Синий
+      line2.setAttribute('stroke-width', '2.5');
+      line2.setAttribute('stroke-linecap', 'round');
+      line2.setAttribute('stroke-linejoin', 'round');
+      graphEl.appendChild(line2);
+
+      // Точки для месячных средних
+      monthlyPoints.forEach(p => {
+        const circle = document.createElementNS(svgNS, 'circle');
+        circle.setAttribute('cx', p.x);
+        circle.setAttribute('cy', p.y);
+        circle.setAttribute('r', '6');
+        circle.setAttribute('fill', '#ffffff');
+        circle.setAttribute('stroke', '#0088cc');
+        circle.setAttribute('stroke-width', '2');
+        graphEl.appendChild(circle);
+
+        const label = document.createElementNS(svgNS, 'text');
+        label.setAttribute('x', p.x);
+        label.setAttribute('y', p.y - 10);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('fill', '#0088cc');
+        label.textContent = p.label;
+        graphEl.appendChild(label);
+      });
+
       // Подписи дней
       const labels = document.createElementNS(svgNS, 'g');
-      points.forEach((p, i) => {
-        if (i % 2 === 0 || points.length <= 7) { // реже подписи на маленьких экранах
+      dailyPoints.forEach((p, i) => {
+        if (i % 2 === 0 || data.length <= 7) {
           const text = document.createElementNS(svgNS, 'text');
           text.setAttribute('x', p.x);
           text.setAttribute('y', height - 6);
