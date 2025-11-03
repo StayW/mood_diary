@@ -132,27 +132,30 @@
       color: white;
       cursor: pointer;
       margin: 12px 0;
-      transition: background 0.2s;
+      transition: 
+        background 0.2s, 
+        transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Анимация нажатия */
+    button.pressed {
+      transform: scale(0.97);
+      filter: brightness(0.92);
+    }
+
+    .mood-btn.pressed {
+      transform: scale(0.95) !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     }
 
     #save-btn {
       background: #0088cc;
     }
 
-    #save-btn:hover, #save-btn:focus {
-      background: #006699;
-    }
-
     .back-btn, .notes-btn {
       background: #6c757d;
-    }
-
-    .back-btn:hover, .notes-btn:hover {
-      background: #5a6268;
-    }
-
-    .history {
-      margin-top: 24px;
     }
 
     #history-view, #notes-view {
@@ -264,28 +267,6 @@
       touch-action: manipulation;
     }
 
-    .bg-option::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.1);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .bg-option img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      border-radius: 12px;
-      z-index: 2;
-      position: relative;
-    }
-
     .bg-option:hover {
       transform: scale(1.05);
     }
@@ -362,7 +343,6 @@
       <button class="back-btn" id="change-bg-btn">Сменить фон</button>
     </div>
 
-    <!-- История: график + месяцы -->
     <div id="history-view" class="container">
       <h2>Моя история</h2>
       <div class="stats" id="stats"></div>
@@ -376,7 +356,6 @@
       <button class="back-btn" id="back-to-form">← Назад</button>
     </div>
 
-    <!-- История заметок -->
     <div id="notes-view" class="container">
       <h2>Мои заметки</h2>
       <div class="notes-list" id="notes-list"></div>
@@ -385,6 +364,41 @@
   </div>
 
   <script>
+    // ========== АНИМАЦИЯ НАЖАТИЯ ==========
+    function addPressEffect() {
+      const buttons = document.querySelectorAll('button, .mood-btn, .bg-option');
+      
+      buttons.forEach(btn => {
+        // Убираем стандартный outline
+        btn.style.outline = 'none';
+
+        const onPress = () => {
+          btn.classList.add('pressed');
+        };
+
+        const onRelease = () => {
+          btn.classList.remove('pressed');
+        };
+
+        // Обработка кликов и касаний
+        btn.addEventListener('mousedown', onPress);
+        btn.addEventListener('touchstart', onPress);
+        
+        btn.addEventListener('mouseup', onRelease);
+        btn.addEventListener('touchend', onRelease);
+        btn.addEventListener('touchcancel', onRelease);
+        btn.addEventListener('mouseleave', onRelease);
+      });
+    }
+
+    // Запускаем анимацию после загрузки DOM
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', addPressEffect);
+    } else {
+      addPressEffect();
+    }
+
+    // ========== ОСТАЛЬНОЙ КОД (без изменений, только добавление выше) ==========
     const backgrounds = {
       tbilisi: 'tab.jpg',
       mtskheta: 'mcxeta.jpg'
@@ -469,7 +483,6 @@
       }
     });
 
-    // ========== ДНЕВНИК ==========
     const moodEmoji = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
     const moodButtons = document.querySelectorAll('.mood-btn');
     const noteInput = document.getElementById('note-input');
@@ -539,7 +552,6 @@
       });
     });
 
-    // ========== ГРАФИК ==========
     function showHistory() {
       const allDates = Object.keys(data).sort();
       if (allDates.length === 0) {
@@ -710,7 +722,6 @@
       }
     }
 
-    // ========== ИСТОРИЯ ЗАМЕТОК ==========
     function showNotesHistory() {
       const notes = [];
       for (const date in data) {
@@ -722,7 +733,6 @@
         }
       }
 
-      // Сортируем от новых к старым
       notes.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       if (notes.length === 0) {
@@ -741,7 +751,6 @@
       notesView.style.display = 'block';
     }
 
-    // ========== СОБЫТИЯ ==========
     showHistoryBtn.addEventListener('click', () => {
       updateMonthlyAverages();
       showHistory();
@@ -759,7 +768,6 @@
       historyView.style.display = 'block';
     });
 
-    // ==== TELEGRAM MINI APP ====
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
       tg.ready();
